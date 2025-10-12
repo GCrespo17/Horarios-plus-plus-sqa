@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.0.2",
-    "@elysiajs/swagger": "^1.0.5",
+    "@elysiajs/openapi": "^1.4.11",
     "elysia": "latest",
     "mongoose": "^8.4.4",
-    "zod": "^3.23.8"
+    "zod": "^4.1.12"
   },
   "module": "src/index.js"
 }

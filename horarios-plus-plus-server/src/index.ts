@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import mongoose, { type ConnectOptions } from "mongoose";
 import { cors } from "@elysiajs/cors";
 import { DBStarter } from "./controllers/db";
-import { swagger } from '@elysiajs/swagger'
+import { openapi } from '@elysiajs/openapi'
 
 import { pluginSchedule } from "./routes/schedules.routes";
 import { pluginSession } from "./routes/sessions.routes";
@@ -28,7 +28,7 @@ class main {
 		this.dbController = controladordb;
 		const controlador = new Elysia()
 			.use(cors())
-			.use(swagger())
+			.use(openapi())
 			.get("/", () => "Hello Elysia")
 			.use(pluginSchedule({ prefix: "Schedules" }, controladordb))
 			.use(pluginSession({ prefix: "Sessions" }, controladordb))
