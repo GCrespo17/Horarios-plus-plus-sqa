@@ -12,8 +12,8 @@
   "scripts": {
     "server": "bun run -F *server dev",
     "client": "cd ./horarios-plus-plus-client;bun run start",
-    "build": "bun run -F * build",
-    "start": "bun run -F * start"
+    "build": "bun run -F '*' build",
+    "start": "bun run -F '*' start"
   },
   "trustedDependencies": ["@biomejs/biome"]
 }
