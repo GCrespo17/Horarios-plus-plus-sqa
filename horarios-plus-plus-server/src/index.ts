@@ -14,9 +14,9 @@ import { pluginEvent } from "./routes/event.routes";
 const username = encodeURIComponent("DanCas");
 const password = encodeURIComponent("queso");
 
-const uri =
-	"mongodb://127.0.0.1:27017/horariospp";																		//Conexión a base de datos de manera local
-	  //`mongodb+srv://${username}:${password}@horariosplus.pktabwe.mongodb.net/?retryWrites=true&w=majority`; //Conexión a base de datos de manera remota
+// URI de MongoDB configurable vía variables de entorno.
+// Si no está definida MONGO_URI, se usa la conexión local por defecto.
+const uri = process.env.MONGO_URI ?? "mongodb://127.0.0.1:27017/horariospp";
 
 const clientOptions: ConnectOptions = {};
 const controladordb: DBStarter = await DBStarter.run(uri);
@@ -26,6 +26,37 @@ class main {
 	public dbController;
 	constructor(controladordb: DBStarter) {
 		this.dbController = controladordb;
+		// Semilla de usuario administrador opcional al iniciar el servidor
+		// Variables de entorno:
+		// CREATE_ADMIN_ON_START=true|false (por defecto true)
+		// ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TYPE (1=usuario, 2=profe, 3=profeEspecial, 4=admin por convención actual)
+		const shouldCreateAdmin = (process.env.CREATE_ADMIN_ON_START ?? "true").toLowerCase() === "true";
+		const adminEmail = process.env.ADMIN_EMAIL ?? "Admin@gmail.com";
+		const adminPassword = process.env.ADMIN_PASSWORD ?? "Admin";
+		// Default a 4 (admin). Se parsea seguro, si falla queda 4.
+		const adminType = Number.parseInt(process.env.ADMIN_TYPE ?? "4") || 4;
+
+		if (shouldCreateAdmin) {
+			// No await bloqueante del servidor: disparamos y registramos resultado
+			(async () => {
+				try {
+					const existing = await controladordb.userModel.findOne({ email: adminEmail });
+					if (!existing) {
+						const user = new controladordb.userModel({
+							email: adminEmail,
+							password: adminPassword,
+							tipo: adminType,
+						});
+						await user.save();
+						console.log(`Admin user created: ${adminEmail} (tipo=${adminType})`);
+					} else {
+						console.log(`Admin user already exists: ${adminEmail}`);
+					}
+				} catch (err) {
+					console.error("Failed to ensure admin user:", err);
+				}
+			})();
+		}
 		const controlador = new Elysia()
 			.use(cors())
 			.use(openapi())

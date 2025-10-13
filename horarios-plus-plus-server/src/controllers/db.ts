@@ -7,7 +7,6 @@ import type {
 	iCareer,
 	Section,
 } from "./../models/classes";
-import { Schedule, User } from "./../models/classes";
 
 interface iSubjectSchema extends iSubject {
 			sections: mongoose.Types.ObjectId[];
@@ -118,7 +117,14 @@ export class DBStarter {
 	public static async run(uri: string) {
 		// 4. Connect to MongoDB
 		await mongoose.connect(uri);
-		await mongoose.connection.db.admin().command({ ping: 1 });
+
+		// Ensure the db is available before calling admin()
+		const adminDb = mongoose.connection.db?.admin();
+		if (!adminDb) {
+			throw new Error("Failed to get database admin - no active DB connection");
+		}
+		await adminDb.command({ ping: 1 });
+
 		console.log(
 			"Pinged your deployment. You successfully connected to MongoDB!",
 		);
