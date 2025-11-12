@@ -6,6 +6,7 @@ import "./GenerationInterface.css";
 import ScheduleViewer from "./ScheduleViewer.tsx";
 import { Subject, type Schedule, type Section } from "../../../horarios-plus-plus-server-new/src/models/classes.ts";
 import toast, { Toaster } from "react-hot-toast";
+import { apiBaseUrl, buildApiUrl } from "./helpers.tsx";
 
 const email = sessionStorage.getItem("login");
 
@@ -283,10 +284,14 @@ export default function GenerationInterface() {
     subject: ISubject,
     id: string
   ): Promise<ISection> {
-    const section: ISection = await fetch(
-      `http://127.0.0.1:4000/api/section/get_sections_from_id?id=${id}`,
-      { headers: { Accept: "application/json" } }
-    )
+    const sectionUrl = new URL(
+      "/api/section/get_sections_from_id",
+      apiBaseUrl,
+    );
+    sectionUrl.searchParams.set("id", id);
+    const section: ISection = await fetch(sectionUrl.toString(), {
+      headers: { Accept: "application/json" },
+    })
       .then((response) => response.json())
       .then((data) => {
         const newSection: ISection = {
@@ -313,7 +318,7 @@ export default function GenerationInterface() {
 
   async function loadFromServer(): Promise<ISubject[]> {
     const subjects: Promise<ISubject>[] = await fetch(
-      "http://127.0.0.1:4000/api/subjects/get_subjects",
+      buildApiUrl("/api/subjects/get_subjects"),
       {
         headers: { Accept: "application/json" },
       }
@@ -341,10 +346,14 @@ export default function GenerationInterface() {
     id: string,
     section: ISection
   ): Promise<ISession> {
-    return await fetch(
-      `http://127.0.0.1:4000/api/session/get_sessions_from_id?id=${id}`,
-      { headers: { Accept: "application/json" } }
-    )
+    const sessionUrl = new URL(
+      "/api/session/get_sessions_from_id",
+      apiBaseUrl,
+    );
+    sessionUrl.searchParams.set("id", id);
+    return await fetch(sessionUrl.toString(), {
+      headers: { Accept: "application/json" },
+    })
       .then((response) => response.json())
       .catch((e) => {
         console.error(e);
@@ -361,10 +370,14 @@ export default function GenerationInterface() {
   }
 
   async function fetchSessionsFromSection(section: ISection) {
-    return await fetch(
-      `http://127.0.0.1:4000/api/session/get_sessions_from_section?nrc=${section.nrc}`,
-      { headers: { Accept: "application/json" } }
-    )
+    const url = new URL(
+      "/api/session/get_sessions_from_section",
+      apiBaseUrl,
+    );
+    url.searchParams.set("nrc", section.nrc);
+    return await fetch(url.toString(), {
+      headers: { Accept: "application/json" },
+    })
       .then((response) => response.json())
       .catch((e) => {
         console.error("No se pudo obtener las sessiones de la seccion");
@@ -396,10 +409,11 @@ export default function GenerationInterface() {
     id: string,
     section: ISection
   ): Promise<ISubject> {
-    return await fetch(
-      `http://127.0.0.1:4000/api/subjects/get_subjects_from_id?id=${id}`,
-      { headers: { Accept: "application/json" } }
-    )
+    const url = new URL("/api/subjects/get_subjects_from_id", apiBaseUrl);
+    url.searchParams.set("id", id);
+    return await fetch(url.toString(), {
+      headers: { Accept: "application/json" },
+    })
       .then((response) => response.json())
       .then((data) => {
         const newSubject: ISubject = {
@@ -444,10 +458,17 @@ export default function GenerationInterface() {
 		const nrcString: string = sectionsNRCs.join(",");
 
 		const owner = email;
-		await fetch(
-			`http://127.0.0.1:4000/api/schedules/generate_schedules?owner=${owner}&nrcs=${nrcString}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const generateUrl = new URL(
+			"/api/schedules/generate_schedules",
+			apiBaseUrl,
+		);
+		if (owner) {
+			generateUrl.searchParams.set("owner", owner);
+		}
+		generateUrl.searchParams.set("nrcs", nrcString);
+		await fetch(generateUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.then(async (data) => {
 				let scheduleList: ISchedule[] = [];
@@ -496,10 +517,15 @@ export default function GenerationInterface() {
     console.log("pepe",schedule);
     
     const nrcs = schedule.sectionList.map((section) => section.nrc).join(",");
-    await fetch(
-      `http://127.0.0.1:4000/api/schedules/save_schedule?owner=${email}&nrcs=${nrcs}`,
-      { method:"put",headers: { Accept: "application/json" } }
-    )
+    const url = new URL("/api/schedules/save_schedule", apiBaseUrl);
+    if (email) {
+      url.searchParams.set("owner", email);
+    }
+    url.searchParams.set("nrcs", nrcs);
+    await fetch(url.toString(), {
+      method: "put",
+      headers: { Accept: "application/json" },
+    })
       .then((response) => response)
       .catch((e) => {
         console.error("ERROR SAVING schedule ", e);

@@ -4,6 +4,7 @@ import CourseSemesterContainer from "./CourseSemesterContainer";
 import NavigationBar from "./NavigationBar";
 import "./EventsInterface.css";
 import toast, {Toaster} from "react-hot-toast";
+import { apiBaseUrl, buildApiUrl } from "./helpers.tsx";
 
 
 interface ISession {
@@ -507,10 +508,14 @@ export default function EventsInterface() {
 		subject: IEvent,
 		id: string,
 	): Promise<ISection> {
-		const event: IEvent = await fetch(
-			`http://127.0.0.1:4000/api/section/get_sections_from_id?id=${id}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const sectionUrl = new URL(
+			"/api/section/get_sections_from_id",
+			apiBaseUrl,
+		);
+		sectionUrl.searchParams.set("id", id);
+		const event: IEvent = await fetch(sectionUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("No se pudo obtener la seccion", e);
@@ -541,7 +546,7 @@ export default function EventsInterface() {
 
 	async function loadFromServer(): Promise<IEvent[]> {
 		const events: Promise<IEvent>[] = await fetch(
-			"http://127.0.0.1:4000/api/events/get_all_events",
+			buildApiUrl("/api/events/get_all_events"),
 			{
 				headers: { Accept: "application/json" },
 			},
@@ -571,10 +576,14 @@ export default function EventsInterface() {
 		id: string,
 		event: IEvent,
 	): Promise<ISession> {
-		return await fetch(
-			`http://127.0.0.1:4000/api/session/get_sessions_from_id?id=${id}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const sessionUrl = new URL(
+			"/api/session/get_sessions_from_id",
+			apiBaseUrl,
+		);
+		sessionUrl.searchParams.set("id", id);
+		return await fetch(sessionUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error(e);
@@ -591,10 +600,14 @@ export default function EventsInterface() {
 	}
 
 	async function fetchSessionsFromEvent(event: IEvent) {
-		return await fetch(
-			`http://127.0.0.1:4000/api/session/get_sessions_from_event?name=${event.name}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL(
+			"/api/session/get_sessions_from_event",
+			apiBaseUrl,
+		);
+		url.searchParams.set("name", event.name);
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("No se pudo obtener las sessiones de la seccion", e);
@@ -639,10 +652,17 @@ export default function EventsInterface() {
 			updating = false;
 			return;
 		}
-		return await fetch(
-			`http://127.0.0.1:4000/api/section/add_section_to_subject?nrc=${section.nrc}&teacher=${section.teacher}&subjectName=${subject.name}&papa=${1}`,
-			{headers: { Accept: "application/json" } },
-		)
+		const url = new URL(
+			"/api/section/add_section_to_subject",
+			apiBaseUrl,
+		);
+		url.searchParams.set("nrc", section.nrc);
+		url.searchParams.set("teacher", section.teacher);
+		url.searchParams.set("subjectName", subject.name);
+		url.searchParams.set("papa", "1");
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error(e);
@@ -689,10 +709,12 @@ export default function EventsInterface() {
 	}
 
 	async function deleteSectionFromDatabase(event: setSelectedEvent) {
-		await fetch(
-			`http://127.0.0.1:4000/api/event/delete_section?nrc=${event.name}`,
-			{ method:"DELETE", headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/event/delete_section", apiBaseUrl);
+		url.searchParams.set("nrc", event.name);
+		await fetch(url.toString(), {
+			method: "DELETE",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				toast.error("Error al eliminar la sección");
@@ -740,10 +762,13 @@ export default function EventsInterface() {
 		updating = true;
 
 		let allow_change = true;
-		return await fetch(
-			`http://127.0.0.1:4000/api/event/update_section?oldnrc=${oldSection.nrc}&nrc=${newSection.nrc}&teacher=${newSection.teacher}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/event/update_section", apiBaseUrl);
+		url.searchParams.set("oldnrc", oldSection.nrc);
+		url.searchParams.set("nrc", newSection.nrc);
+		url.searchParams.set("teacher", newSection.teacher);
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("Error actualizando base de datos ", e);
@@ -811,14 +836,17 @@ export default function EventsInterface() {
 		event: IEvent,
 	) {
 		let saved = true;
-		await fetch(
-			`http://127.0.0.1:4000/api/session/delete_session_from_event?name=${
-				event.name
-			}&day=${
-				session.day
-			}&start=${session.start.getTime()}&end=${session.end.getTime()}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL(
+			"/api/session/delete_session_from_event",
+			apiBaseUrl,
+		);
+		url.searchParams.set("name", event.name);
+		url.searchParams.set("day", session.day.toString());
+		url.searchParams.set("start", session.start.getTime().toString());
+		url.searchParams.set("end", session.end.getTime().toString());
+		await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				saved = false;
@@ -836,17 +864,15 @@ export default function EventsInterface() {
 
 	async function saveNewSessionToEvent(session: ISession, event: IEvent) {
 		let saved = true;
-		await fetch(
-			`http://127.0.0.1:4000/api/session/add_session_to_event?day=${
-				session.day
-			}&start=${session.start.getTime()}&end=${session.end.getTime()}&name=${
-				event.name
-			}`,
-			{
-				method: "POST",
-				headers: { Accept: "application/json" },
-			},
-		)
+		const url = new URL("/api/session/add_session_to_event", apiBaseUrl);
+		url.searchParams.set("day", session.day.toString());
+		url.searchParams.set("start", session.start.getTime().toString());
+		url.searchParams.set("end", session.end.getTime().toString());
+		url.searchParams.set("name", event.name);
+		await fetch(url.toString(), {
+			method: "POST",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				saved = false;
@@ -910,22 +936,38 @@ export default function EventsInterface() {
 		newSession: ISession,
 		event: IEvent,
 	) {
-		const variables:string =
-			`oldday=${oldSession.day}&` +
-			`oldstart=${oldSession.start.getTime()}&` +
-			`oldend=${oldSession.end.getTime()}&` +
-			`newday=${newSession.day}&` +
-			`newstart=${newSession.start.getTime()}&` +
-			`newend=${newSession.end.getTime()}&` +
-			`nrc=${event.name}`;
+		const updateUrl = new URL(
+			"/api/session/updateSession_from_event",
+			apiBaseUrl,
+		);
+		updateUrl.searchParams.set("oldday", oldSession.day.toString());
+		updateUrl.searchParams.set(
+			"oldstart",
+			oldSession.start.getTime().toString(),
+		);
+		updateUrl.searchParams.set(
+			"oldend",
+			oldSession.end.getTime().toString(),
+		);
+		updateUrl.searchParams.set("newday", newSession.day.toString());
+		updateUrl.searchParams.set(
+			"newstart",
+			newSession.start.getTime().toString(),
+		);
+		updateUrl.searchParams.set(
+			"newend",
+			newSession.end.getTime().toString(),
+		);
+		updateUrl.searchParams.set("nrc", event.name);
 
-		const uri:string=`http://127.0.0.1:4000/api/session/updateSession_from_event?${variables}`
+		const uri = updateUrl.toString();
 		console.log(uri);
-		
+
 		let changed = true;
-		await fetch(uri,
-			{ method:"put",headers: { Accept: "application/json" } },
-		)
+		await fetch(uri, {
+			method: "put",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.then((data) => {
 				console.log(data);
@@ -968,10 +1010,14 @@ export default function EventsInterface() {
 		const newName= newEvent.name;
 		console.log(`actualizando nombre de ${oldEvent.name} a '${newName}'`);
 		
-		return await fetch(
-			`http://127.0.0.1:4000/api/events/update_event?oldname=${oldEvent.name}&newname=${newName}&event=i`,
-			{ method:"put",headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/events/update_event", apiBaseUrl);
+		url.searchParams.set("oldname", oldEvent.name);
+		url.searchParams.set("newname", newName);
+		url.searchParams.set("event", "i");
+		return await fetch(url.toString(), {
+			method: "put",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("Error actualizando base de datos ", e);
@@ -1089,8 +1135,12 @@ export default function EventsInterface() {
 
 	async function addEventServer(newEvent: IEvent) {
 		updating = true;
-		return await fetch(`http://127.0.0.1:4000/api/events/create_event/?name=${newEvent.name}`,
-			{ method:"post",headers: { Accept: "application/json" } },)
+		const url = new URL("/api/events/create_event/", apiBaseUrl);
+		url.searchParams.set("name", newEvent.name);
+		return await fetch(url.toString(), {
+			method: "post",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {				
 				console.error("Error al crear evento ", e);
@@ -1137,8 +1187,13 @@ export default function EventsInterface() {
 	}
 
 	async function deleteEventFromDatabase(event: IEvent){
-		return await fetch(`http://127.0.0.1:4000/api/events/delete_event?eventName=${event.name}&event=a`,
-			{ method:"delete",headers: { Accept: "application/json" } },)
+		const url = new URL("/api/events/delete_event", apiBaseUrl);
+		url.searchParams.set("eventName", event.name);
+		url.searchParams.set("event", "a");
+		return await fetch(url.toString(), {
+			method: "delete",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("Error al eliminar curso ", e);

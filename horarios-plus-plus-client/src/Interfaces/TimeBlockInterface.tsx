@@ -6,6 +6,7 @@ import "./TimeBlockInterface.css";
 import { set } from "mongoose";
 import { string } from "zod";
 import toast, {Toaster} from "react-hot-toast";
+import { apiBaseUrl, buildApiUrl, regExpEmail } from "./helpers.tsx";
 
 interface ISession {
 	day: number;
@@ -539,10 +540,14 @@ export default function TimeBlockInterface() {
 		subject: ISubject,
 		id: string,
 	): Promise<ISection> {
-		const section: ISection = await fetch(
-			`http://127.0.0.1:4000/api/section/get_sections_from_id?id=${id}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const sectionUrl = new URL(
+			"/api/section/get_sections_from_id",
+			apiBaseUrl,
+		);
+		sectionUrl.searchParams.set("id", id);
+		const section: ISection = await fetch(sectionUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("No se pudo obtener la seccion", e);
@@ -572,12 +577,10 @@ export default function TimeBlockInterface() {
 	}
 
 	async function loadFromServer(): Promise<ISubject[]> {
-		const subjects: Promise<ISubject>[] = await fetch(
-			"http://127.0.0.1:4000/api/subjects/get_subjects",
-			{
-				headers: { Accept: "application/json" },
-			},
-		)
+		const subjectsUrl = buildApiUrl("/api/subjects/get_subjects");
+		const subjects: Promise<ISubject>[] = await fetch(subjectsUrl, {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("No se pudo obtener los cursos", e);
@@ -606,10 +609,14 @@ export default function TimeBlockInterface() {
 		id: string,
 		section: ISection,
 	): Promise<ISession> {
-		return await fetch(
-			`http://127.0.0.1:4000/api/session/get_sessions_from_id?id=${id}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const sessionUrl = new URL(
+			"/api/session/get_sessions_from_id",
+			apiBaseUrl,
+		);
+		sessionUrl.searchParams.set("id", id);
+		return await fetch(sessionUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error(e);
@@ -626,10 +633,14 @@ export default function TimeBlockInterface() {
 	}
 
 	async function fetchSessionsFromSection(section: ISection) {
-		return await fetch(
-			`http://127.0.0.1:4000/api/session/get_sessions_from_section?nrc=${section.nrc}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL(
+			"/api/session/get_sessions_from_section",
+			apiBaseUrl,
+		);
+		url.searchParams.set("nrc", section.nrc);
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("No se pudo obtener las sessiones de la seccion", e);
@@ -676,10 +687,17 @@ export default function TimeBlockInterface() {
 			updating = false;
 			return;
 		}
-		return await fetch(
-			`http://127.0.0.1:4000/api/section/add_section_to_subject?nrc=${section.nrc}&teacher=${section.teacher}&subjectName=${subject.name}&papa=${1}`,
-			{headers: { Accept: "application/json" } },
-		)
+		const url = new URL(
+			"/api/section/add_section_to_subject",
+			apiBaseUrl,
+		);
+		url.searchParams.set("nrc", section.nrc);
+		url.searchParams.set("teacher", section.teacher);
+		url.searchParams.set("subjectName", subject.name);
+		url.searchParams.set("papa", "1");
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error(e);
@@ -727,10 +745,15 @@ export default function TimeBlockInterface() {
 
 	async function deleteSectionFromDatabase(section: ISection) {
 		const mail = sessionStorage.getItem("login");
-		await fetch(
-			`http://127.0.0.1:4000/api/section/delete_section?nrc=${section.nrc}&mail=${mail}`,
-			{ method:"DELETE", headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/section/delete_section", apiBaseUrl);
+		url.searchParams.set("nrc", section.nrc);
+		if (mail) {
+			url.searchParams.set("mail", mail);
+		}
+		await fetch(url.toString(), {
+			method: "DELETE",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				toast.error("Error al eliminar la sección");
@@ -778,10 +801,13 @@ export default function TimeBlockInterface() {
 		updating = true;
 
 		let allow_change = true;
-		return await fetch(
-			`http://127.0.0.1:4000/api/section/update_section?oldnrc=${oldSection.nrc}&nrc=${newSection.nrc}&teacher=${newSection.teacher}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/section/update_section", apiBaseUrl);
+		url.searchParams.set("oldnrc", oldSection.nrc);
+		url.searchParams.set("nrc", newSection.nrc);
+		url.searchParams.set("teacher", newSection.teacher);
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("Error actualizando base de datos ", e);
@@ -849,14 +875,14 @@ export default function TimeBlockInterface() {
 		section: ISection,
 	) {
 		let saved = true;
-		await fetch(
-			`http://127.0.0.1:4000/api/session/delete_session?nrc=${
-				section.nrc
-			}&day=${
-				session.day
-			}&start=${session.start.getTime()}&end=${session.end.getTime()}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/session/delete_session", apiBaseUrl);
+		url.searchParams.set("nrc", section.nrc);
+		url.searchParams.set("day", session.day.toString());
+		url.searchParams.set("start", session.start.getTime().toString());
+		url.searchParams.set("end", session.end.getTime().toString());
+		await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				saved = false;
@@ -874,17 +900,15 @@ export default function TimeBlockInterface() {
 
 	async function saveNewSessionToSection(session: ISession, section: ISection) {
 		let saved = true;
-		await fetch(
-			`http://127.0.0.1:4000/api/session/add_session_to_section?day=${
-				session.day
-			}&start=${session.start.getTime()}&end=${session.end.getTime()}&nrc=${
-				section.nrc
-			}`,
-			{
-				method: "POST",
-				headers: { Accept: "application/json" },
-			},
-		)
+		const url = new URL("/api/session/add_session_to_section", apiBaseUrl);
+		url.searchParams.set("day", session.day.toString());
+		url.searchParams.set("start", session.start.getTime().toString());
+		url.searchParams.set("end", session.end.getTime().toString());
+		url.searchParams.set("nrc", section.nrc);
+		await fetch(url.toString(), {
+			method: "POST",
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				saved = false;
@@ -948,22 +972,32 @@ export default function TimeBlockInterface() {
 		newSession: ISession,
 		section: ISection,
 	) {
-		const variables:string =
-			`oldday=${oldSession.day}&` +
-			`oldstart=${oldSession.start.getTime()}&` +
-			`oldend=${oldSession.end.getTime()}&` +
-			`newday=${newSession.day}&` +
-			`newstart=${newSession.start.getTime()}&` +
-			`newend=${newSession.end.getTime()}&` +
-			`nrc=${section.nrc}`;
+		const updateUrl = new URL("/api/session/updateSession", apiBaseUrl);
+		updateUrl.searchParams.set("oldday", oldSession.day.toString());
+		updateUrl.searchParams.set(
+			"oldstart",
+			oldSession.start.getTime().toString(),
+		);
+		updateUrl.searchParams.set(
+			"oldend",
+			oldSession.end.getTime().toString(),
+		);
+		updateUrl.searchParams.set("newday", newSession.day.toString());
+		updateUrl.searchParams.set(
+			"newstart",
+			newSession.start.getTime().toString(),
+		);
+		updateUrl.searchParams.set(
+			"newend",
+			newSession.end.getTime().toString(),
+		);
+		updateUrl.searchParams.set("nrc", section.nrc);
 
-		const uri:string=`http://127.0.0.1:4000/api/session/updateSession?${variables}`
+		const uri = updateUrl.toString();
 		console.log(uri);
-		
+
 		let changed = true;
-		await fetch(uri,
-			{ headers: { Accept: "application/json" } },
-		)
+		await fetch(uri, { headers: { Accept: "application/json" } })
 			.then((response) => response.json())
 			.catch((e) => {
 				changed = false;
@@ -1002,10 +1036,13 @@ export default function TimeBlockInterface() {
 		const newName= newSubject.name;
 		console.log(`actualizando nombre de ${oldSubject.name} a '${newName}'`);
 		
-		return await fetch(
-			`http://127.0.0.1:4000/api/subjects/update_subject?oldname=${oldSubject.name}&newname=${newName}&section=i`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/subjects/update_subject", apiBaseUrl);
+		url.searchParams.set("oldname", oldSubject.name);
+		url.searchParams.set("newname", newName);
+		url.searchParams.set("section", "i");
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("Error actualizando base de datos ", e);
@@ -1125,8 +1162,11 @@ export default function TimeBlockInterface() {
 
 	async function addSubjectServer(newSubject: ISubject) {
 		updating = true;
-		return await fetch(`http://127.0.0.1:4000/api/subjects/create_subject?name=${newSubject.name}`,
-			{ headers: { Accept: "application/json" } },)
+		const url = new URL("/api/subjects/create_subject", apiBaseUrl);
+		url.searchParams.set("name", newSubject.name);
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {				
 				console.error("Error al crear curso ", e);
@@ -1173,8 +1213,12 @@ export default function TimeBlockInterface() {
 	}
 
 	async function deleteSubjectFromDatabase(subject: ISubject){
-		return await fetch(`http://127.0.0.1:4000/api/subjects/delete_subject?subjectName=${subject.name}&subject=${subject}`,
-			{ headers: { Accept: "application/json" } },)
+		const url = new URL("/api/subjects/delete_subject", apiBaseUrl);
+		url.searchParams.set("subjectName", subject.name);
+		url.searchParams.set("subject", JSON.stringify(subject));
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.error("Error al eliminar curso ", e);

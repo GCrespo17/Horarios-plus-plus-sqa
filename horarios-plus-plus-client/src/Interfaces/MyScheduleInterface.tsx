@@ -2,7 +2,8 @@ import React from "react";
 import { useState } from "react";
 import NavigationBar from "./NavigationBar";
 import "./MyScheduleInterface.css";
-import toast, {Toaster} from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
+import { apiBaseUrl, buildApiUrl } from "./helpers.tsx";
 
 import type {
 	ISchedule,
@@ -46,7 +47,9 @@ function VisorEventos({
 
 	async function fetchEvents() {
 		try {
-			const response = await fetch("http://127.0.0.1:4000/api/events/get_all_events");
+			const response = await fetch(
+				buildApiUrl("/api/events/get_all_events"),
+			);
 			const data = await response.json();
 			setEvents(data);
 		} catch (error) {
@@ -143,10 +146,14 @@ export default function MySheduleInterface() {
 		nrc: string,
 		section: ISection,
 	): Promise<ISubject> {
-		return await fetch(
-			`http://127.0.0.1:4000/api/subjects/get_subject_from_nrc?nrc=${nrc}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL(
+			"/api/subjects/get_subject_from_nrc",
+			apiBaseUrl,
+		);
+		url.searchParams.set("nrc", nrc);
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.then((data) => {
 				const newSubject: ISubject = {
@@ -159,10 +166,14 @@ export default function MySheduleInterface() {
 
 	async function loadSectionFromID(id: string): Promise<ISection> {
 		let fetched = true;
-		const section: ISection = await fetch(
-			`http://127.0.0.1:4000/api/section/get_sections_from_id?id=${id}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const sectionUrl = new URL(
+			"/api/section/get_sections_from_id",
+			apiBaseUrl,
+		);
+		sectionUrl.searchParams.set("id", id);
+		const section: ISection = await fetch(sectionUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				fetched = false;
@@ -190,10 +201,16 @@ export default function MySheduleInterface() {
 
 	async function getSchedule() {
 		let fetched = true;
-		return await fetch(
-			`http://127.0.0.1:4000/api/schedule/get_schedule_from_owner?owner=${email}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const scheduleUrl = new URL(
+			"/api/schedule/get_schedule_from_owner",
+			apiBaseUrl,
+		);
+		if (email) {
+			scheduleUrl.searchParams.set("owner", email);
+		}
+		return await fetch(scheduleUrl.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				fetched = false;

@@ -1,5 +1,5 @@
 import React from "react";
-import { regExpEmail, regExpPassword } from  "./helpers.tsx";
+import { apiBaseUrl, regExpEmail, regExpPassword } from "./helpers.tsx";
 import NavigationBar from "./NavigationBar";
 import "./SignUpInterface.css";
 import { set } from "mongoose";
@@ -45,10 +45,16 @@ export default function SignUpInterface() {
 	
 
 	async function SendCredentialsDatabase() {
-		return await fetch(
-			`http://127.0.0.1:4000/api/sign_up?email=${email}&password=${password}`,
-			{ headers: { Accept: "application/json" } },
-		)
+		const url = new URL("/api/sign_up", apiBaseUrl);
+		if (email !== undefined) {
+			url.searchParams.set("email", String(email));
+		}
+		if (password !== undefined) {
+			url.searchParams.set("password", String(password));
+		}
+		return await fetch(url.toString(), {
+			headers: { Accept: "application/json" },
+		})
 			.then((response) => response.json())
 			.catch((e) => {
 				console.log("Could not send sign up to database");
