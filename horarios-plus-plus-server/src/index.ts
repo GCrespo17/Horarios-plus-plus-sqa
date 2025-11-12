@@ -20,6 +20,8 @@ const uri = process.env.MONGO_URI;
 
 const clientOptions: ConnectOptions = {};
 const controladordb: DBStarter = await DBStarter.run(uri);
+const port = Number.parseInt(process.env.PORT ?? "4000", 10) || 4000;
+const hostname = process.env.HOST ?? "0.0.0.0";
 
 class main {
 	public controller;
@@ -71,7 +73,10 @@ class main {
 			.onError(({ code }) => {
 				if (code === "NOT_FOUND") return "Route not found :{";
 			})
-			.listen(4000);
+			.listen({
+				hostname,
+				port,
+			});
 
 		console.log(
 			`🦊 Elysia is running at ${controlador.server?.hostname}:${controlador.server?.port}`,
