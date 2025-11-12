@@ -1,14 +1,14 @@
 export const regExpEmail = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 export const regExpPassword = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
 declare const process: {
-	env?: Record<string, string | undefined>;
+	env: {
+		REACT_APP_API_URL?: string;
+	};
 };
 
 const envApiUrl =
-	(typeof process !== "undefined" &&
-		process.env &&
-		process.env.REACT_APP_API_URL) ||
-	(import.meta as any)?.env?.VITE_API_URL;
+	process.env.REACT_APP_API_URL ||
+		(import.meta as any)?.env?.VITE_API_URL;
 
 export const apiBaseUrl =
 	envApiUrl && envApiUrl.trim().length > 0
