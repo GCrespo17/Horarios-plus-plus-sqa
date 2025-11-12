@@ -1,7 +1,7 @@
 import NavigationBar from "./NavigationBar";
 import "./LogInInterface.css";
 import React, { useState } from "react";
-import { regExpEmail } from  "./helpers.tsx";
+import { apiBaseUrl, regExpEmail } from "./helpers.tsx";
 
 export default function LogInInterface() {
 	const [showError, setShowError] = useState(false);
@@ -31,7 +31,10 @@ const regexHandler = new RegExp(regExpEmail);
   }
 
   async function SendLoginDatabase() {
-    return await fetch(`http://localhost:4000/api/login?email=${email}&password=${password}`,
+    const url = new URL("/api/login", apiBaseUrl);
+    url.searchParams.set("email", `${email ?? ""}`);
+    url.searchParams.set("password", `${password ?? ""}`);
+    return await fetch(url.toString(),
       { headers: { Accept: 'application/json' } })
       .then(response => response.json())
       .catch((e) => { console.log("Could not send login to database") })

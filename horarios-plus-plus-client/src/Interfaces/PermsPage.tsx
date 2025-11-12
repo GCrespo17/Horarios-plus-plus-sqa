@@ -2,8 +2,7 @@ import NavigationBar from "./NavigationBar.tsx";
 import "./PermsPage.css";
 import React from "react";
 import { useState } from "react";
-import { regExpEmail } from "./helpers.tsx";
-import { set } from "mongoose";
+import { apiBaseUrl, regExpEmail } from "./helpers.tsx";
 import toast, { Toaster } from "react-hot-toast";
 
 interface ISection {
@@ -64,7 +63,9 @@ function UserContainer({user,updatePermision,updateRol,setCambio}:UserContainerP
 	}
 
 	function eliminarCuentaDB(email:string) {
-		fetch(`http://localhost:4000/api/deleteUser?email=${email}`, {
+		const url = new URL("/api/deleteUser", apiBaseUrl);
+		url.searchParams.set("email", email);
+		fetch(url.toString(), {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ email: email }),
@@ -132,7 +133,8 @@ export default function PermsInterface() {
 
 
 	async function fetchUsers() {
-		const users = await fetch("http://localhost:4000/api/get_usuarios", {
+		const usersUrl = new URL("/api/get_usuarios", apiBaseUrl);
+		const users = await fetch(usersUrl.toString(), {
 			headers: { Accept: "application/json" },
 		})
 			.then((response) => response.json())
@@ -229,7 +231,12 @@ export default function PermsInterface() {
 		console.log(transformarEnEnviar());
 		
 
-    fetch('http://127.0.0.1:4000/api/update_users', { method: "PUT", body: JSON.stringify(transformarEnEnviar()) })
+		const updateUrl = new URL("/api/update_users", apiBaseUrl);
+    fetch(updateUrl.toString(), {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(transformarEnEnviar())
+		})
 	.catch((e) => {
 		toast.error("No se pudieron guardar los cambios");
 		return;
