@@ -16,7 +16,7 @@ const password = encodeURIComponent("queso");
 
 // URI de MongoDB configurable vía variables de entorno.
 // Si no está definida MONGO_URI, se usa la conexión local por defecto.
-const uri = process.env.MONGO_URI ?? "mongodb://127.0.0.1:27017/horariospp";
+const uri = process.env.MONGO_URI;
 
 const clientOptions: ConnectOptions = {};
 const controladordb: DBStarter = await DBStarter.run(uri);
