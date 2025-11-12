@@ -178,3 +178,7 @@ Nota: algunas rutas usan query params y otras esperan body JSON; revisa `src/rou
 ---
 
 Proyecto inicializado con Bun. Si algo no coincide con tu entorno, abre un issue o ajusta los scripts en cada `package.json`.
+
+Para poder hacer logout corre este comando en la consola del navegador:
+
+sessionStorage.clear()
